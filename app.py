@@ -37,6 +37,7 @@ def load_sheet_data(worksheet_name, columns):
     except Exception:
         return pd.DataFrame(columns=columns)
 
+
 def save_sheet_data(df, worksheet_name):
     """Saves/Updates the DataFrame back to the Google Sheet worksheet."""
     conn.update(worksheet=worksheet_name, data=df)
