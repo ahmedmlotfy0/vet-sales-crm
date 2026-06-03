@@ -318,5 +318,35 @@ def main():
         st.markdown("### ⏱️ جميع المعاملات بترتيب حدوثها")
         if not history_df.empty:
             st.dataframe(
-                history_df
-    
+                history_df.iloc[::-1], 
+                column_config={
+                    "Invoice Added": st.column_config.NumberColumn("Invoice Added", format="%.2f EGP"),
+                    "Amount Paid": st.column_config.NumberColumn("Amount Paid", format="%.2f EGP"),
+                    "Current Balance": st.column_config.NumberColumn("Current Balance", format="%.2f EGP"),
+                },
+                use_container_width=True, hide_index=True
+            )
+        else:
+            st.info("لم يتم تسجيل أي حركات تاريخية بعد.")
+
+    with tab4:
+        st.markdown("### 📈 تحليلات إحصائية حية")
+        if not master_df.empty:
+            col_d1, col_d2 = st.columns(2)
+            with col_d1:
+                st.subheader("💰 إجمالي المبيعات حسب المنطقة")
+                area_sales = master_df.groupby("Area")["Total Invoice"].sum()
+                st.bar_chart(area_sales)
+            with col_d2:
+                st.subheader("👨‍⚕️ أعلى 5 دكاترة مبيعاً وسحباً")
+                top_docs = master_df.groupby("Doctor Name")["Total Invoice"].sum().sort_values(ascending=False).head(5)
+                st.bar_chart(top_docs)
+            st.divider()
+            st.subheader("📊 توزيع العملاء بناءً على حالة الدفع المالي")
+            status_counts = master_df["Payment Status"].value_counts()
+            st.bar_chart(status_counts)
+        else:
+            st.info("أدخل بعض البيانات أولاً لتظهر لك التحليلات والرسوم البيانية هنا تلقائياً!")
+
+if __name__ == "__main__":
+    main()
