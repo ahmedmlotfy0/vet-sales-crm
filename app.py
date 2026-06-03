@@ -293,7 +293,7 @@ def main():
                 column_config={
                     "Invoice Added": st.column_config.NumberColumn("Invoice Added", format="%.2f EGP"),
                     "Amount Paid": st.column_config.NumberColumn("Amount Paid", format="%.2f EGP"),
-                    "Current Balance": Ost.column_config.NumberColumn("Current Balance", format="%.2f EGP"),
+                    "Current Balance": st.column_config.NumberColumn("Current Balance", format="%.2f EGP"),
                 },
                 use_container_width=True, hide_index=True
             )
@@ -321,4 +321,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
