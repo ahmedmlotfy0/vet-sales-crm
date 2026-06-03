@@ -214,7 +214,36 @@ def main():
         else:
             st.info("لا توجد بيانات حالياً.")
 
-    # Action C: Export Downloads
+    # Action C: Delete Doctor Record (الزر الجديد لحذف المعاملات الخاطئة)
+    with st.sidebar.expander("❌ Delete Doctor Record (حذف عميل بالكامل)"):
+        if not master_df.empty:
+            options_del = master_df.index.tolist()
+            format_func_del = lambda i: f"{master_df.loc[i, 'Doctor Name']} ({master_df.loc[i, 'Area']})"
+            selected_del_idx = st.selectbox("Select Doctor to Delete", options_del, format_func=format_func_del, key="del_doc_select")
+            
+            # قفل أمان لمنع الحذف بالخطأ من شاشة الموبايل
+            confirm_del = st.checkbox("أنا متأكد من رغبتي في حذف هذا الدكتور وحسابه تماماً", key="confirm_del_check")
+            
+            if st.button("Delete Permanently (حذف نهائي)", type="primary"):
+                if confirm_del:
+                    doc_name_del = master_df.loc[selected_del_idx, "Doctor Name"]
+                    area_del = master_df.loc[selected_del_idx, "Area"]
+                    
+                    # حذف السطر من جدول الماستر
+                    master_df = master_df.drop(selected_del_idx).reset_index(drop=True)
+                    save_sheet_data(master_df, "Master")
+                    
+                    # تسجيل حركة الحذف في الـ History كتوثيق للأرشيف
+                    log_to_history(doc_name_del, area_del, "Client Record Deleted", 0.0, 0.0, 0.0, "تم حذف سجل الدكتور بالكامل من جدول الحسابات الرئيسي")
+                    
+                    st.success(f"تم حذف الدكتور {doc_name_del} بنجاح!")
+                    st.rerun()
+                else:
+                    st.warning("برجاء تفعيل مربع التأكيد أولاً لتفعيل زر الحذف نهائياً.")
+        else:
+            st.info("قاعدة البيانات فارغة، لا يوجد دكاترة لحذفهم.")
+
+    # Action D: Export Downloads
     st.sidebar.divider()
     st.sidebar.markdown("### 📥 تحميل البيانات الاحتياطية (Excel)")
     if not master_df.empty:
@@ -222,7 +251,7 @@ def main():
     if not history_df.empty:
         st.sidebar.download_button(label="📜 تحميل سجل العمليات الكامل (Excel)", data=to_excel_bytes(history_df), file_name='vet_sales_history.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', use_container_width=True)
 
-    # --- 3. TABS PRESENTATION ---
+# --- 3. TABS PRESENTATION ---
     tab1, tab2, tab3, tab4 = st.tabs([
         "📋 قاعدة البيانات الحالية (Master)", 
         "🔔 متابعات اليوم (Today's Follow-ups)",
@@ -289,35 +318,5 @@ def main():
         st.markdown("### ⏱️ جميع المعاملات بترتيب حدوثها")
         if not history_df.empty:
             st.dataframe(
-                history_df.iloc[::-1], 
-                column_config={
-                    "Invoice Added": st.column_config.NumberColumn("Invoice Added", format="%.2f EGP"),
-                    "Amount Paid": st.column_config.NumberColumn("Amount Paid", format="%.2f EGP"),
-                    "Current Balance": st.column_config.NumberColumn("Current Balance", format="%.2f EGP"),
-                },
-                use_container_width=True, hide_index=True
-            )
-        else:
-            st.info("لم يتم تسجيل أي حركات تاريخية بعد.")
-
-    with tab4:
-        st.markdown("### 📈 تحليلات إحصائية حية")
-        if not master_df.empty:
-            col_d1, col_d2 = st.columns(2)
-            with col_d1:
-                st.subheader("💰 إجمالي المبيعات حسب المنطقة")
-                area_sales = master_df.groupby("Area")["Total Invoice"].sum()
-                st.bar_chart(area_sales)
-            with col_d2:
-                st.subheader("👨‍⚕️ أعلى 5 دكاترة مبيعاً وسحباً")
-                top_docs = master_df.groupby("Doctor Name")["Total Invoice"].sum().sort_values(ascending=False).head(5)
-                st.bar_chart(top_docs)
-            st.divider()
-            st.subheader("📊 توزيع العملاء بناءً على حالة الدفع المالي")
-            status_counts = master_df["Payment Status"].value_counts()
-            st.bar_chart(status_counts)
-        else:
-            st.info("أدخل بعض البيانات أولاً لتظهر لك التحليلات والرسوم البيانية هنا تلقائياً!")
-
-if __name__ == "__main__":
-    main()
+                history_df
+    
